@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepseek API 连通性验证工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 0 20px;
+            background: #f5f7fa;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 26px;
+        }
+        .api-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f2f5;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .api-key {
+            color: #2f80ed;
+            font-family: monospace;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        .btn {
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            background: #2f80ed;
+            color: white;
+            font-size: 17px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: block;
+            margin: 30px auto;
+        }
+        .btn:hover {
+            background: #2569c3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 2;
+        }
+        .loading {
+            color: #666;
+            background: #f8f9fa;
+        }
+        .success {
+            color: #218838;
+            background: #f0fff4;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            color: #dc3545;
+            background: #fff5f5;
+            border: 1px solid #f5c6cb;
+        }
+        .tip {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.7;
+        }
+        b {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Deepseek API 连通性验证</h1>
+        <div class="api-info">
+            待验证API密钥：
+            <div class="api-key">sk-9b3acb3fda3f409f8075867cd60df78d</div>
+        </div>
+        <button class="btn" id="checkApiBtn">开始验证API</button>
+        <div class="result" id="apiResult">点击上方按钮开始验证API连通性</div>
+        <div class="tip">
+            💡 提示：1. 直接双击打开即可使用，无需本地服务器；2. 验证发送极简测试请求，几乎不消耗API调用量；3. 失败时会显示官方错误码和原因，方便快速排查。
+        </div>
+    </div>
+
+    <script>
+        // Deepseek API 核心配置（可直接修改此处密钥）
+        const DEEPSEEK_CONFIG = {
+            apiKey: 'sk-9b3acb3fda3f409f8075867cd60df78d',
+            apiUrl: 'https://api.deepseek.com/v1/chat/completions',
+            model: 'deepseek-chat'
+        };
+
+        // 页面元素
+        const checkApiBtn = document.getElementById('checkApiBtn');
+        const apiResult = document.getElementById('apiResult');
+
+        // 设置结果展示样式和内容
+        function setResult(el, content, type = '') {
+            el.className = 'result';
+            type && el.classList.add(type);
+            el.innerHTML = content;
+        }
+
+        // API 验证核心逻辑
+        checkApiBtn.addEventListener('click', async () => {
+            // 禁用按钮防止重复点击
+            checkApiBtn.disabled = true;
+            checkApiBtn.innerText = '验证中...';
+            setResult(apiResult, '正在检测API连通性，请稍候（通常1-3秒）...', 'loading');
+
+            try {
+                // 构造极简测试请求体，减少调用量
+                const requestData = {
+                    model: DEEPSEEK_CONFIG.model,
+                    messages: [{ role: 'user', content: '返回一个字：好' }],
+                    temperature: 0.1,
+                    max_tokens: 5 // 限制最大返回字符数
+                };
+
+                // 发起API请求
+                const response = await fetch(DEEPSEEK_CONFIG.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_CONFIG.apiKey}`
+                    },
+                    body: JSON.stringify(requestData),
+                    cache: 'no-cache'
+                });
+
+                const resData = await response.json();
+
+                // 处理成功响应
+                if (response.ok) {
+                    const reply = resData.choices[0]?.message?.content || '无返回内容';
+                    setResult(apiResult, `
+                        <b>✅ API验证成功！</b><br>
+                        响应状态：${response.status} ${response.statusText}<br>
+                        API返回结果：${reply}<br>
+                        结论：密钥有效、网络连通、Deepseek服务正常
+                    `, 'success');
+                } 
+                // 处理API返回的错误（密钥无效/配额不足等）
+                else {
+                    const errMsg = resData.error?.message || '未知API错误';
+                    const errCode = resData.error?.code || '无错误码';
+                    setResult(apiResult, `
+                        <b>❌ API验证失败（服务端错误）</b><br>
+                        响应状态：${response.status} ${response.statusText}<br>
+                        错误码：${errCode}<br>
+                        错误原因：${errMsg}<br>
+                        常见排查：密钥错误/过期、调用量耗尽、模型名称错误
+                    `, 'error');
+                }
+            } 
+            // 处理网络错误/跨域/服务宕机等客户端异常
+            catch (err) {
+                setResult(apiResult, `
+                    <b>❌ API请求异常（客户端错误）</b><br>
+                    异常信息：${err.message}<br>
+                    常见排查：本地网络不通、开启了代理/梯子、Deepseek服务临时宕机
+                `, 'error');
+            } 
+            // 无论成功失败，恢复按钮状态
+            finally {
+                checkApiBtn.disabled = false;
+                checkApiBtn.innerText = '开始验证API';
+            }
+        });
+    </script>
+</body>
+</html>

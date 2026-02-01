@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选科智能测试与建议系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #1a6dcc 0%, #2d8cf0 100%);
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 109, 204, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .progress-step {
+            text-align: center;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.active {
+            background-color: #2d8cf0;
+            color: white;
+            box-shadow: 0 0 0 8px rgba(45, 140, 240, 0.2);
+        }
+
+        .step-circle.completed {
+            background-color: #19be6b;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background-color: #e0e0e0;
+            z-index: 1;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #2d8cf0;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .test-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .test-title {
+            font-size: 1.8rem;
+            color: #1a6dcc;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .test-description {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2d8cf0;
+        }
+
+        .question-counter {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .question-container {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-label:hover {
+            border-color: #2d8cf0;
+            background-color: #f0f7ff;
+        }
+
+        .option-label.selected {
+            border-color: #2d8cf0;
+            background-color: #f0f7ff;
+        }
+
+        .option-input {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+
+        .option-text {
+            flex-grow: 1;
+            font-size: 1rem;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: #2d8cf0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1a6dcc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 109, 204, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.active {
+            display: block;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-title {
+            font-size: 1.6rem;
+            color: #1a6dcc;
+            margin-bottom: 15px;
+        }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .subject-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #2d8cf0;
+        }
+
+        .subject-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .subject-weight {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1a6dcc;
+        }
+
+        .recommendation-level {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .strong-recommend {
+            background-color: #e8f7ef;
+            color: #19be6b;
+        }
+
+        .medium-recommend {
+            background-color: #fff7e6;
+            color: #ff9900;
+        }
+
+        .not-recommend {
+            background-color: #ffe6e6;
+            color: #ed3f14;
+        }
+
+        .subject-description {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .ai-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .ai-container.active {
+            display: block;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .ai-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1a6dcc 0%, #2d8cf0 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .ai-chat-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .ai-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            max-width: 80%;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top-left-radius: 0;
+        }
+
+        .message.user .message-content {
+            background: #2d8cf0;
+            color: white;
+            border-top-right-radius: 0;
+        }
+
+        .ai-input-container {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background: white;
+        }
+
+        .ai-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-right: 10px;
+            resize: vertical;
+            min-height: 45px;
+            max-height: 120px;
+        }
+
+        .ai-input:focus {
+            outline: none;
+            border-color: #2d8cf0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2d8cf0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a6dcc;
+            margin: 10px 0;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* 开发者工具专用样式 */
+        #devEntry {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2d8cf0;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(45, 140, 240, 0.3);
+            z-index: 9999;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        #devEntry:hover {
+            transform: scale(1.1);
+            background: #1a6dcc;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subject-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .step-label {
+                font-size: 0.8rem;
+            }
+            
+            .test-container {
+                padding: 20px 15px;
+            }
+            
+            #devEntry {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>选科智能测试与建议系统</h1>
+            <p class="subtitle">基于MBTI性格测试、多元智能测试、霍兰德职业兴趣测试和职业锚测试，为您提供科学精准的选科建议</p>
+        </header>
+
+        <!-- 进度指示器 -->
+        <div class="progress-container">
+            <div class="progress-line">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="progress-step">
+                <div class="step-circle active" id="step1">1</div>
+                <div class="step-label">MBTI测试</div>
+            </div>
+            
+            <div class="progress-step">
+                <div class="step-circle" id="step2">2</div>
+                <div class="step-label">多元智能测试</div>
+            </div>
+            
+            <div class="progress-step">
+                <div class="step-circle" id="step3">3</div>
+                <div class="step-label">霍兰德测试</div>
+            </div>
+            
+            <div class="progress-step">
+                <div class="step-circle" id="step4">4</div>
+                <div class="step-label">职业锚测试</div>
+            </div>
+            
+            <div class="progress-step">
+                <div class="step-circle" id="step5">5</div>
+                <div class="step-label">结果分析</div>
+            </div>
+        </div>
+
+        <!-- MBTI测试 -->
+        <div class="test-container active" id="mbtiTest">
+            <h2 class="test-title">MBTI职业性格测试</h2>
+            <div class="test-description">
+                <p>MBTI测试通过四个维度评估您的性格倾向：</p>
+                <ul>
+                    <li><strong>态度倾向</strong>：外向(E) - 内向(I)</li>
+                    <li><strong>接受信息</strong>：感觉(S) - 直觉(N)</li>
+                    <li><strong>处理信息</strong>：思考(T) - 情感(F)</li>
+                    <li><strong>行动方式</strong>：判断(J) - 感知(P)</li>
+                </ul>
+                <p>请根据您的真实情况选择最符合的选项，所有题目均为单选题。</p>
+            </div>
+            
+            <div class="question-counter" id="mbtiCounter">第1题/共93题</div>
+            
+            <div id="mbtiQuestionsContainer">
+                <!-- MBTI题目将通过JS动态加载 -->
+            </div>
+            
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="mbtiPrevBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="mbtiNextBtn">下一题</button>
+            </div>
+        </div>
+
+        <!-- 多元智能测试 -->
+        <div class="test-container" id="miTest">
+            <h2 class="test-title">多元智能测试</h2>
+            <div class="test-description">
+                <p>多元智能理论认为每个人都拥有八种不同的智能类型，请评估以下描述与您的符合程度：</p>
+                <ul>
+                    <li><strong>很符合</strong>：2分（非常符合我的情况）</li>
+                    <li><strong>不太符合</strong>：1分（有时或部分符合）</li>
+                    <li><strong>不知道</strong>：0分（不确定或没注意过）</li>
+                    <li><strong>不符合</strong>：-1分（基本不符合我的情况）</li>
+                </ul>
+            </div>
+            
+            <div class="question-counter" id="miCounter">第1题/共64题</div>
+            
+            <div id="miQuestionsContainer">
+                <!-- 多元智能题目将通过JS动态加载 -->
+            </div>
+            
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="miPrevBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="miNextBtn">下一题</button>
+            </div>
+        </div>
+
+        <!-- 霍兰德测试 -->
+        <div class="test-container" id="hollandTest">
+            <h2 class="test-title">霍兰德职业兴趣测试</h2>
+            <div class="test-description">
+                <p>霍兰德测试将评估您在六种职业兴趣类型中的倾向：</p>
+                <ul>
+                    <li><strong>现实型(R)</strong>：喜欢动手操作、使用工具</li>
+                    <li><strong>研究型(I)</strong>：喜欢思考、分析、研究</li>
+                    <li><strong>艺术型(A)</strong>：喜欢创造、表达、审美</li>
+                    <li><strong>社会型(S)</strong>：喜欢帮助他人、与人交往</li>
+                    <li><strong>企业型(E)</strong>：喜欢领导、说服、影响他人</li>
+                    <li><strong>传统型(C)</strong>：喜欢有序、稳定、注重细节</li>
+                </ul>
+                <p>请根据您的第一感觉选择"是"或"否"。</p>
+            </div>
+            
+            <div class="question-counter" id="hollandCounter">第1题/共60题</div>
+            
+            <div id="hollandQuestionsContainer">
+                <!-- 霍兰德题目将通过JS动态加载 -->
+            </div>
+            
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="hollandPrevBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="hollandNextBtn">下一题</button>
+            </div>
+        </div>
+
+        <!-- 职业锚测试 -->
+        <div class="test-container" id="careerAnchorTest">
+            <h2 class="test-title">职业锚测试</h2>
+            <div class="test-description">
+                <p>职业锚是您职业决策时最看重的核心价值。请评估以下陈述与您的符合程度：</p>
+                <ul>
+                    <li><strong>1分</strong>：完全不符合</li>
+                    <li><strong>2-3分</strong>：偶尔/有时符合</li>
+                    <li><strong>4-5分</strong>：经常/频繁符合</li>
+                    <li><strong>6分</strong>：完全符合</li>
+                </ul>
+                <p>测试完成后，请选择3道最符合您情况的题目，我们会额外加分。</p>
+            </div>
+            
+            <div class="question-counter" id="careerAnchorCounter">第1题/共40题</div>
+            
+            <div id="careerAnchorQuestionsContainer">
+                <!-- 职业锚题目将通过JS动态加载 -->
+            </div>
+            
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="careerAnchorPrevBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="careerAnchorNextBtn">下一题</button>
+            </div>
+        </div>
+
+        <!-- 结果展示 -->
+        <div class="results-container" id="resultsContainer">
+            <h2 class="test-title">您的选科分析结果</h2>
+            
+            <div class="results-summary" id="resultsSummary">
+                <!-- 测试结果摘要将通过JS动态生成 -->
+            </div>
+            
+            <div class="result-card">
+                <h3 class="result-title">选科适配度分析</h3>
+                <p>基于您的测试结果，以下是各科目的适配度评分（0-10分）：</p>
+                
+                <div class="subject-grid" id="subjectWeights">
+                    <!-- 科目权重将通过JS动态生成 -->
+                </div>
+                
+                <div class="recommendation-legend" style="margin-top: 25px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px;">推荐等级说明：</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center;">
+                            <div class="recommendation-level strong-recommend" style="margin-right: 10px;">强推荐</div>
+                            <span>7.0-10.0分：科目与您高度适配</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="recommendation-level medium-recommend" style="margin-right: 10px;">中等推荐</div>
+                            <span>4.5-6.9分：科目与您一般适配</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="recommendation-level not-recommend" style="margin-right: 10px;">不推荐</div>
+                            <span>0.0-4.4分：科目与您适配度低</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" id="startAIChatBtn" style="padding: 15px 40px; font-size: 1.1rem;">
+                    获取AI个性化分析建议
+                </button>
+            </div>
+        </div>
+
+        <!-- AI聊天 -->
+        <div class="ai-container" id="aiContainer">
+            <div class="ai-header">
+                <div class="ai-icon">AI</div>
+                <div>
+                    <h2 style="color: #1a6dcc;">DeepSeek AI选科顾问</h2>
+                    <p style="color: #666;">基于您的测试结果，为您提供个性化分析与建议</p>
+                </div>
+            </div>
+            
+            <div class="ai-chat-container">
+                <div class="ai-messages" id="aiMessages">
+                    <!-- AI消息将通过JS动态添加 -->
+                </div>
+                
+                <div class="loading" id="aiLoading">
+                    <div class="spinner"></div>
+                    <p>AI正在思考中，请稍候...</p>
+                </div>
+                
+                <div class="ai-status" id="aiStatus" style="
+                    padding: 10px 20px;
+                    background: #f8f9fa;
+                    border-top: 1px solid #eee;
+                    font-size: 0.9rem;
+                    color: #666;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <span>💬 AI选科顾问已就绪</span>
+                    <button id="aiClearHistory" style="
+                        background: none;
+                        border: 1px solid #ddd;
+                        padding: 3px 10px;
+                        border-radius: 4px;
+                        font-size: 0.8rem;
+                        cursor: pointer;
+                    ">清空对话</button>
+                </div>
+                
+                <div class="ai-input-container">
+                    <textarea class="ai-input" id="aiInput" placeholder="输入您的问题，例如：我适合选择物理+化学+生物组合吗？未来可以从事哪些职业？&#10;（按Ctrl+Enter发送，Enter换行）" rows="2"></textarea>
+                    <button class="btn btn-primary" id="sendAIMessageBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 开发者入口按钮 -->
+    <div id="devEntry" title="开发者工具 (Ctrl+Shift+D)">🛠️</div>
+
+    <!-- 引入题库JS文件 -->
+    <script src="mbti_questions.js"></script>
+    <script src="multiple_intelligence_questions.js"></script>
+    <script src="holland_questions.js"></script>
+    <script src="career_anchor_questions.js"></script>
+
+    <!-- 引入增强AI功能 -->
+    <script src="enhanced_ai.js"></script>
+
+    <!-- 引入开发者工具 -->
+    <script src="developer_tools.js"></script>
+
+    <script>
+        // 全局变量
+        let currentTest = 1; // 1: MBTI, 2: 多元智能, 3: 霍兰德, 4: 职业锚
+        let currentQuestionIndex = 0;
+        
+        // 存储测试结果
+        let testResults = {
+            mbti: {
+                answers: {},
+                scores: { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 }
+            },
+            multipleIntelligence: {
+                answers: {},
+                scores: {}
+            },
+            holland: {
+                answers: {},
+                scores: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 }
+            },
+            careerAnchor: {
+                answers: {},
+                selectedIds: [], // 存储额外加分的题目ID
+                scores: {}
+            }
+        };
+        
+        // 增强AI实例
+        let enhancedAI = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMBTIQuestion();
+            setupEventListeners();
+            
+            // 显示欢迎信息
+            console.log('%c🎯 选科智能测试系统 %cv1.1.0', 
+                'color: #1a6dcc; font-size: 16px; font-weight: bold;', 
+                'color: #19be6b; font-size: 12px;');
+            console.log('📊 开发者工具: 按 Ctrl+Shift+D 或点击右下角🛠️按钮');
+            console.log('🤖 AI功能: 使用DeepSeek API提供个性化建议');
+        });
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // MBTI测试按钮
+            document.getElementById('mbtiPrevBtn').addEventListener('click', () => navigateQuestion('prev'));
+            document.getElementById('mbtiNextBtn').addEventListener('click', () => navigateQuestion('next'));
+            
+            // 多元智能测试按钮
+            document.getElementById('miPrevBtn').addEventListener('click', () => navigateQuestion('prev'));
+            document.getElementById('miNextBtn').addEventListener('click', () => navigateQuestion('next'));
+            
+            // 霍兰德测试按钮
+            document.getElementById('hollandPrevBtn').addEventListener('click', () => navigateQuestion('prev'));
+            document.getElementById('hollandNextBtn').addEventListener('click', () => navigateQuestion('next'));
+            
+            // 职业锚测试按钮
+            document.getElementById('careerAnchorPrevBtn').addEventListener('click', () => navigateQuestion('prev'));
+            document.getElementById('careerAnchorNextBtn').addEventListener('click', () => navigateQuestion('next'));
+            
+            // AI聊天按钮
+            document.getElementById('startAIChatBtn').addEventListener('click', startAIChat);
+            document.getElementById('sendAIMessageBtn').addEventListener('click', sendAIMessage);
+            
+            // AI输入框事件
+            document.getElementById('aiInput').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    sendAIMessage();
+                }
+            });
+            
+            // 清空AI对话历史
+            document.getElementById('aiClearHistory').addEventListener('click', function() {
+                if (enhancedAI) {
+                    enhancedAI.clearHistory();
+                    document.getElementById('aiMessages').innerHTML = '';
+                    addAIMessage('对话历史已清空！有什么新的问题想要咨询吗？');
+                }
+            });
+        }
+        
+        // 加载MBTI题目
+        function loadMBTIQuestion() {
+            const questions = window.MBTITestData?.questions || [];
+            if (questions.length === 0 || currentQuestionIndex >= questions.length) {
+                return;
+            }
+            
+            const question = questions[currentQuestionIndex];
+            const container = document.getElementById('mbtiQuestionsContainer');
+            
+            container.innerHTML = `
+                <div class="question-container">
+                    <div class="question-text">${question.id}. ${question.question}</div>
+                    <div class="options-container">
+                        <label class="option-label ${testResults.mbti.answers[question.id] === 'A' ? 'selected' : ''}">
+                            <input type="radio" name="mbti_${question.id}" value="A" class="option-input" 
+                                   ${testResults.mbti.answers[question.id] === 'A' ? 'checked' : ''}>
+                            <span class="option-text">${question.optionA}</span>
+                        </label>
+                        <label class="option-label ${testResults.mbti.answers[question.id] === 'B' ? 'selected' : ''}">
+                            <input type="radio" name="mbti_${question.id}" value="B" class="option-input"
+                                   ${testResults.mbti.answers[question.id] === 'B' ? 'checked' : ''}>
+                            <span class="option-text">${question.optionB}</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            // 更新计数器
+            document.getElementById('mbtiCounter').textContent = `第${currentQuestionIndex + 1}题/共${questions.length}题`;
+            
+            // 更新按钮状态
+            document.getElementById('mbtiPrevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('mbtiNextBtn').textContent = 
+                currentQuestionIndex === questions.length - 1 ? '完成测试' : '下一题';
+            
+            // 添加选项选择事件
+            const radioButtons = container.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const label = this.closest('.option-label');
+                    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+                    label.classList.add('selected');
+                    
+                    // 保存答案
+                    testResults.mbti.answers[question.id] = this.value;
+                    
+                    // 更新开发者工具数据
+                    if (window.developerTools) {
+                        window.developerTools.updateData(testResults);
+                    }
+                });
+            });
+        }
+        
+        // 加载多元智能题目
+        function loadMIQuestion() {
+            const questions = window.MultipleIntelligenceTestData?.questions || [];
+            if (questions.length === 0 || currentQuestionIndex >= questions.length) {
+                return;
+            }
+            
+            const question = questions[currentQuestionIndex];
+            const container = document.getElementById('miQuestionsContainer');
+            
+            container.innerHTML = `
+                <div class="question-container">
+                    <div class="question-text">${question.id}. ${question.question}</div>
+                    <div class="options-container">
+                        ${question.options.map((option, index) => `
+                            <label class="option-label ${testResults.multipleIntelligence.answers[question.id] === index ? 'selected' : ''}">
+                                <input type="radio" name="mi_${question.id}" value="${index}" class="option-input"
+                                       ${testResults.multipleIntelligence.answers[question.id] === index ? 'checked' : ''}>
+                                <span class="option-text">${option.text}（${option.score > 0 ? '+' : ''}${option.score}分）</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // 更新计数器
+            document.getElementById('miCounter').textContent = `第${currentQuestionIndex + 1}题/共${questions.length}题`;
+            
+            // 更新按钮状态
+            document.getElementById('miPrevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('miNextBtn').textContent = 
+                currentQuestionIndex === questions.length - 1 ? '完成测试' : '下一题';
+            
+            // 添加选项选择事件
+            const radioButtons = container.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const label = this.closest('.option-label');
+                    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+                    label.classList.add('selected');
+                    
+                    // 保存答案
+                    testResults.multipleIntelligence.answers[question.id] = parseInt(this.value);
+                    
+                    // 更新开发者工具数据
+                    if (window.developerTools) {
+                        window.developerTools.updateData(testResults);
+                    }
+                });
+            });
+        }
+        
+        // 加载霍兰德题目
+        function loadHollandQuestion() {
+            const questions = window.HollandTestData?.questions || [];
+            if (questions.length === 0 || currentQuestionIndex >= questions.length) {
+                return;
+            }
+            
+            const question = questions[currentQuestionIndex];
+            const container = document.getElementById('hollandQuestionsContainer');
+            
+            container.innerHTML = `
+                <div class="question-container">
+                    <div class="question-text">${question.id}. ${question.question}</div>
+                    <div class="options-container">
+                        <label class="option-label ${testResults.holland.answers[question.id] === 0 ? 'selected' : ''}">
+                            <input type="radio" name="holland_${question.id}" value="0" class="option-input"
+                                   ${testResults.holland.answers[question.id] === 0 ? 'checked' : ''}>
+                            <span class="option-text">是</span>
+                        </label>
+                        <label class="option-label ${testResults.holland.answers[question.id] === 1 ? 'selected' : ''}">
+                            <input type="radio" name="holland_${question.id}" value="1" class="option-input"
+                                   ${testResults.holland.answers[question.id] === 1 ? 'checked' : ''}>
+                            <span class="option-text">否</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            // 更新计数器
+            document.getElementById('hollandCounter').textContent = `第${currentQuestionIndex + 1}题/共${questions.length}题`;
+            
+            // 更新按钮状态
+            document.getElementById('hollandPrevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('hollandNextBtn').textContent = 
+                currentQuestionIndex === questions.length - 1 ? '完成测试' : '下一题';
+            
+            // 添加选项选择事件
+            const radioButtons = container.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const label = this.closest('.option-label');
+                    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+                    label.classList.add('selected');
+                    
+                    // 保存答案
+                    testResults.holland.answers[question.id] = parseInt(this.value);
+                    
+                    // 更新开发者工具数据
+                    if (window.developerTools) {
+                        window.developerTools.updateData(testResults);
+                    }
+                });
+            });
+        }
+        
+        // 加载职业锚题目
+        function loadCareerAnchorQuestion() {
+            const questions = window.CareerAnchorTestData?.questions || [];
+            if (questions.length === 0 || currentQuestionIndex >= questions.length) {
+                return;
+            }
+            
+            const question = questions[currentQuestionIndex];
+            const container = document.getElementById('careerAnchorQuestionsContainer');
+            
+            // 检查是否已被选中加分
+            const isSelected = testResults.careerAnchor.selectedIds.includes(question.id);
+            
+            container.innerHTML = `
+                <div class="question-container">
+                    <div class="question-text">${question.id}. ${question.question}</div>
+                    <div class="options-container">
+                        <div style="margin-bottom: 15px; color: #666; font-size: 0.9rem;">
+                            请选择评分（1-6分）：
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                            ${[1, 2, 3, 4, 5, 6].map(score => `
+                                <label class="option-label ${testResults.careerAnchor.answers[question.id] === score ? 'selected' : ''}" 
+                                       style="flex: 1; min-width: 60px; text-align: center;">
+                                    <input type="radio" name="career_anchor_${question.id}" value="${score}" class="option-input"
+                                           ${testResults.careerAnchor.answers[question.id] === score ? 'checked' : ''}>
+                                    <span class="option-text">${score}分</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #eee;">
+                            <label class="option-label ${isSelected ? 'selected' : ''}" style="background-color: ${isSelected ? '#e8f7ef' : '#f8f9fa'}">
+                                <input type="checkbox" id="select_for_extra_${question.id}" ${isSelected ? 'checked' : ''}>
+                                <span class="option-text" style="color: ${isSelected ? '#19be6b' : '#666'}">
+                                    <strong>标记此题</strong>：此题最符合我的情况（将额外加4分）
+                                </span>
+                            </label>
+                            <div style="font-size: 0.85rem; color: #999; margin-top: 8px; padding-left: 30px;">
+                                注：请选择3道最符合您情况的题目进行标记
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 更新计数器
+            document.getElementById('careerAnchorCounter').textContent = `第${currentQuestionIndex + 1}题/共${questions.length}题`;
+            
+            // 更新按钮状态
+            document.getElementById('careerAnchorPrevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('careerAnchorNextBtn').textContent = 
+                currentQuestionIndex === questions.length - 1 ? '完成测试' : '下一题';
+            
+            // 添加评分选择事件
+            const radioButtons = container.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const label = this.closest('.option-label');
+                    document.querySelectorAll('.option-label').forEach(l => {
+                        if (l.querySelector('input[type="radio"]')) {
+                            l.classList.remove('selected');
+                        }
+                    });
+                    label.classList.add('selected');
+                    
+                    // 保存答案
+                    testResults.careerAnchor.answers[question.id] = parseInt(this.value);
+                    
+                    // 更新开发者工具数据
+                    if (window.developerTools) {
+                        window.developerTools.updateData(testResults);
+                    }
+                });
+            });
+            
+            // 添加标记题目事件
+            const checkbox = document.getElementById(`select_for_extra_${question.id}`);
+            if (checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const label = this.closest('.option-label');
+                    
+                    if (this.checked) {
+                        // 检查是否已满3个
+                        if (testResults.careerAnchor.selectedIds.length >= 3) {
+                            alert('最多只能选择3道题目进行标记。请先取消其他标记的题目。');
+                            this.checked = false;
+                            return;
+                        }
+                        label.classList.add('selected');
+                        label.style.backgroundColor = '#e8f7ef';
+                        testResults.careerAnchor.selectedIds.push(question.id);
+                    } else {
+                        label.classList.remove('selected');
+                        label.style.backgroundColor = '#f8f9fa';
+                        testResults.careerAnchor.selectedIds = testResults.careerAnchor.selectedIds.filter(id => id !== question.id);
+                    }
+                    
+                    // 更新开发者工具数据
+                    if (window.developerTools) {
+                        window.developerTools.updateData(testResults);
+                    }
+                });
+            }
+        }
+        
+        // 导航题目
+        function navigateQuestion(direction) {
+            const testContainers = document.querySelectorAll('.test-container');
+            const totalTests = 4;
+            
+            // 保存当前答案
+            saveCurrentAnswer();
+            
+            if (direction === 'next') {
+                // 检查当前测试是否已完成所有题目
+                const isTestComplete = checkTestCompletion();
+                
+                if (isTestComplete) {
+                    // 完成当前测试，进入下一个测试
+                    if (currentTest < totalTests) {
+                        // 移动到下一个测试
+                        testContainers[currentTest - 1].classList.remove('active');
+                        currentTest++;
+                        currentQuestionIndex = 0;
+                        testContainers[currentTest - 1].classList.add('active');
+                        
+                        // 更新进度指示器
+                        updateProgressIndicator();
+                        
+                        // 加载新测试的第一题
+                        loadQuestionByTest();
+                    } else {
+                        // 所有测试完成，显示结果
+                        completeAllTests();
+                    }
+                } else {
+                    // 当前测试的下一题
+                    currentQuestionIndex++;
+                    loadQuestionByTest();
+                }
+            } else if (direction === 'prev') {
+                // 上一题
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    loadQuestionByTest();
+                }
+            }
+        }
+        
+        // 保存当前答案
+        function saveCurrentAnswer() {
+            // 答案已在选择时实时保存，此处主要处理页面切换时的保存
+            // 具体保存逻辑在各题目的change事件中已实现
+        }
+        
+        // 检查测试是否完成
+        function checkTestCompletion() {
+            let totalQuestions = 0;
+            let answeredQuestions = 0;
+            
+            switch(currentTest) {
+                case 1: // MBTI
+                    totalQuestions = window.MBTITestData?.questions?.length || 0;
+                    answeredQuestions = Object.keys(testResults.mbti.answers).length;
+                    break;
+                case 2: // 多元智能
+                    totalQuestions = window.MultipleIntelligenceTestData?.questions?.length || 0;
+                    answeredQuestions = Object.keys(testResults.multipleIntelligence.answers).length;
+                    break;
+                case 3: // 霍兰德
+                    totalQuestions = window.HollandTestData?.questions?.length || 0;
+                    answeredQuestions = Object.keys(testResults.holland.answers).length;
+                    break;
+                case 4: // 职业锚
+                    totalQuestions = window.CareerAnchorTestData?.questions?.length || 0;
+                    answeredQuestions = Object.keys(testResults.careerAnchor.answers).length;
+                    break;
+            }
+            
+            // 检查是否已答完所有题目
+            return currentQuestionIndex === totalQuestions - 1;
+        }
+        
+        // 根据当前测试加载题目
+        function loadQuestionByTest() {
+            switch(currentTest) {
+                case 1:
+                    loadMBTIQuestion();
+                    break;
+                case 2:
+                    loadMIQuestion();
+                    break;
+                case 3:
+                    loadHollandQuestion();
+                    break;
+                case 4:
+                    loadCareerAnchorQuestion();
+                    break;
+            }
+        }
+        
+        // 更新进度指示器
+        function updateProgressIndicator() {
+            const steps = document.querySelectorAll('.step-circle');
+            const progressFill = document.getElementById('progressFill');
+            
+            // 重置所有步骤
+            steps.forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+            
+            // 设置已完成和当前步骤
+            for (let i = 0; i < currentTest; i++) {
+                if (i < currentTest - 1) {
+                    steps[i].classList.add('completed');
+                } else {
+                    steps[i].classList.add('active');
+                }
+            }
+            
+            // 更新进度条
+            const progressPercentage = ((currentTest - 1) / 4) * 100;
+            progressFill.style.width = `${progressPercentage}%`;
+        }
+        
+        // 完成所有测试
+        function completeAllTests() {
+            // 计算所有测试结果
+            calculateAllTestResults();
+            
+            // 隐藏所有测试容器
+            document.querySelectorAll('.test-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            
+            // 显示结果容器
+            document.getElementById('resultsContainer').classList.add('active');
+            
+            // 更新进度指示器到第5步
+            document.getElementById('step5').classList.add('active');
+            document.getElementById('step4').classList.add('completed');
+            document.getElementById('progressFill').style.width = '100%';
+            
+            // 显示测试结果摘要
+            displayResultsSummary();
+            
+            // 计算并显示选科权重
+            calculateSubjectWeights();
+            
+            // 更新开发者工具数据
+            if (window.developerTools) {
+                window.developerTools.updateData(testResults);
+            }
+        }
+        
+        // 计算所有测试结果
+        function calculateAllTestResults() {
+            // 计算MBTI分数
+            calculateMBTIScores();
+            
+            // 计算多元智能分数
+            calculateMIScores();
+            
+            // 计算霍兰德分数
+            calculateHollandScores();
+            
+            // 计算职业锚分数
+            calculateCareerAnchorScores();
+        }
+        
+        // 计算MBTI分数
+        function calculateMBTIScores() {
+            const questions = window.MBTITestData?.questions || [];
+            
+            // 重置分数
+            testResults.mbti.scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            
+            // 计算每个维度的分数
+            questions.forEach(question => {
+                const answer = testResults.mbti.answers[question.id];
+                if (answer === 'A') {
+                    testResults.mbti.scores[question.scoreA]++;
+                } else if (answer === 'B') {
+                    testResults.mbti.scores[question.scoreB]++;
+                }
+            });
+            
+            // 确定MBTI类型
+            const mbtiType = window.MBTITestData?.calculateMBTIType(testResults.mbti.scores) || '未知';
+            testResults.mbti.type = mbtiType;
+        }
+        
+        // 计算多元智能分数
+        function calculateMIScores() {
+            const questions = window.MultipleIntelligenceTestData?.questions || [];
+            
+            // 重置分数
+            testResults.multipleIntelligence.scores = {};
+            
+            // 计算每个智能类型的分数
+            questions.forEach(question => {
+                const answerIndex = testResults.multipleIntelligence.answers[question.id];
+                if (answerIndex !== undefined) {
+                    const score = question.options[answerIndex]?.score || 0;
+                    const module = question.module;
+                    
+                    if (!testResults.multipleIntelligence.scores[module]) {
+                        testResults.multipleIntelligence.scores[module] = 0;
+                    }
+                    
+                    testResults.multipleIntelligence.scores[module] += score;
+                }
+            });
+            
+            // 获取前三的智能类型
+            const topIntelligences = window.MultipleIntelligenceTestData?.getTopIntelligences(
+                testResults.multipleIntelligence.scores, 3
+            ) || [];
+            
+            testResults.multipleIntelligence.topIntelligences = topIntelligences;
+        }
+        
+        // 计算霍兰德分数
+        function calculateHollandScores() {
+            const questions = window.HollandTestData?.questions || [];
+            const scoringRules = window.HollandTestData?.scoringRules || {};
+            
+            // 重置分数
+            testResults.holland.scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+            
+            // 计算每个类型的分数
+            questions.forEach(question => {
+                const answer = testResults.holland.answers[question.id];
+                const type = question.type;
+                
+                if (answer !== undefined && scoringRules[type]) {
+                    // 检查是否应该计分
+                    const isYesScore = scoringRules[type].yes.includes(question.id);
+                    const isNoScore = scoringRules[type].no.includes(question.id);
+                    
+                    if ((isYesScore && answer === 0) || (isNoScore && answer === 1)) {
+                        testResults.holland.scores[type]++;
+                    }
+                }
+            });
+            
+            // 获取霍兰德代码（得分最高的三个类型）
+            const sortedTypes = Object.entries(testResults.holland.scores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(item => item[0]);
+            
+            testResults.holland.code = sortedTypes.join('');
+            
+            // 获取对应的职业建议
+            const careerMatch = window.HollandTestData?.careerMatch || {};
+            testResults.holland.careers = careerMatch[testResults.holland.code] || [];
+        }
+        
+        // 计算职业锚分数
+        function calculateCareerAnchorScores() {
+            const calculateFunction = window.CareerAnchorTestData?.calculateCareerAnchorScores;
+            
+            if (calculateFunction) {
+                const results = calculateFunction(
+                    testResults.careerAnchor.answers,
+                    testResults.careerAnchor.selectedIds
+                );
+                
+                testResults.careerAnchor.scores = results;
+                
+                // 获取主要职业锚
+                const primaryAnchors = window.CareerAnchorTestData?.getPrimaryCareerAnchor(results) || [];
+                testResults.careerAnchor.primary = primaryAnchors[0] || null;
+            }
+        }
+        
+        // 显示测试结果摘要
+        function displayResultsSummary() {
+            const summaryContainer = document.getElementById('resultsSummary');
+            
+            let summaryHTML = '';
+            
+            // MBTI结果
+            if (testResults.mbti.type) {
+                const mbtiTypeInfo = window.MBTITestData?.getMBTITypeDetails(testResults.mbti.type);
+                summaryHTML += `
+                    <div class="summary-card">
+                        <div class="summary-label">MBTI性格类型</div>
+                        <div class="summary-value">${testResults.mbti.type}</div>
+                        <div>${mbtiTypeInfo?.name || '未知类型'}</div>
+                    </div>
+                `;
+            }
+            
+            // 多元智能结果
+            if (testResults.multipleIntelligence.topIntelligences?.length > 0) {
+                const topIntelligence = testResults.multipleIntelligence.topIntelligences[0];
+                summaryHTML += `
+                    <div class="summary-card">
+                        <div class="summary-label">优势智能类型</div>
+                        <div class="summary-value">${topIntelligence[0]}</div>
+                        <div>得分: ${topIntelligence[1]}</div>
+                    </div>
+                `;
+            }
+            
+            // 霍兰德结果
+            if (testResults.holland.code) {
+                summaryHTML += `
+                    <div class="summary-card">
+                        <div class="summary-label">霍兰德职业代码</div>
+                        <div class="summary-value">${testResults.holland.code}</div>
+                        <div>${testResults.holland.careers.slice(0, 2).join('、')}</div>
+                    </div>
+                `;
+            }
+            
+            // 职业锚结果
+            if (testResults.careerAnchor.primary) {
+                summaryHTML += `
+                    <div class="summary-card">
+                        <div class="summary-label">主要职业锚</div>
+                        <div class="summary-value">${testResults.careerAnchor.primary.name}</div>
+                        <div>${testResults.careerAnchor.primary.description}</div>
+                    </div>
+                `;
+            }
+            
+            summaryContainer.innerHTML = summaryHTML;
+        }
+        
+        // 计算选科权重
+        function calculateSubjectWeights() {
+            // 根据"选科权重计算函数说明"中的公式计算
+            // 这里简化实现，实际应根据完整公式计算
+            
+            // 获取标准化得分
+            const mbtiStd = calculateMBTIStandardizedScores();
+            const miStd = calculateMIStandardizedScores();
+            const hollandStd = calculateHollandStandardizedScores();
+            const careerAnchorStd = calculateCareerAnchorStandardizedScores();
+            
+            // 计算各科目权重（简化版本）
+            const subjectWeights = {
+                "物理": calculatePhysicsWeight(mbtiStd, miStd, hollandStd, careerAnchorStd),
+                "历史": calculateHistoryWeight(mbtiStd, miStd, hollandStd, careerAnchorStd),
+                "化学": calculateChemistryWeight(mbtiStd, miStd, hollandStd, careerAnchorStd),
+                "生物": calculateBiologyWeight(mbtiStd, miStd, hollandStd, careerAnchorStd),
+                "政治": calculatePoliticsWeight(mbtiStd, miStd, hollandStd, careerAnchorStd),
+                "地理": calculateGeographyWeight(mbtiStd, miStd, hollandStd, careerAnchorStd)
+            };
+            
+            // 保存到testResults中供AI使用
+            testResults.subjectWeights = subjectWeights;
+            
+            // 显示科目权重
+            displaySubjectWeights(subjectWeights);
+        }
+        
+        // 计算MBTI标准化得分（简化）
+        function calculateMBTIStandardizedScores() {
+            const scores = testResults.mbti.scores;
+            
+            // 计算S/T/J组合得分
+            const maxSN = Math.max(scores.S + scores.N, 1);
+            const maxTF = Math.max(scores.T + scores.F, 1);
+            const maxJP = Math.max(scores.J + scores.P, 1);
+            
+            const MBTI_S_T_J = ((scores.S / maxSN) + (scores.T / maxTF) + (scores.J / maxJP)) / 3;
+            const MBTI_N_F_P = ((scores.N / maxSN) + (scores.F / maxTF) + (scores.P / maxJP)) / 3;
+            const MBTI_S_N_balance = Math.abs(scores.S - scores.N) / maxSN;
+            
+            return { MBTI_S_T_J, MBTI_N_F_P, MBTI_S_N_balance };
+        }
+        
+        // 计算多元智能标准化得分（简化）
+        function calculateMIStandardizedScores() {
+            const scores = testResults.multipleIntelligence.scores;
+            
+            // 标准化到0-2分
+            const standardize = (score) => (score + 8) / 24 * 2;
+            
+            return {
+                language: standardize(scores["语言智能"] || 0),
+                math_logic: standardize(scores["数学逻辑智能"] || 0),
+                space: standardize(scores["空间智能"] || 0),
+                nature: standardize(scores["自然认知智能"] || 0),
+                interpersonal: standardize(scores["人际智能"] || 0),
+                self_cognition: standardize(scores["自我认知智能"] || 0),
+                body_move: standardize(scores["身体运动智能"] || 0)
+            };
+        }
+        
+        // 计算霍兰德标准化得分（简化）
+        function calculateHollandStandardizedScores() {
+            const scores = testResults.holland.scores;
+            
+            // 标准化到0-2分
+            const standardize = (score) => score / 10 * 2;
+            
+            return {
+                R: standardize(scores.R || 0),
+                I: standardize(scores.I || 0),
+                A: standardize(scores.A || 0),
+                S: standardize(scores.S || 0),
+                E: standardize(scores.E || 0),
+                C: standardize(scores.C || 0)
+            };
+        }
+        
+        // 计算职业锚标准化得分（简化）
+        function calculateCareerAnchorStandardizedScores() {
+            const scores = testResults.careerAnchor.scores || [];
+            
+            // 标准化到0-2分
+            const standardize = (avgScore) => (avgScore || 3) / 6 * 2;
+            
+            let result = {};
+            
+            // 初始化默认值
+            const types = ["TF", "GM", "AU", "SE", "EC", "SV", "CH", "LS"];
+            types.forEach(type => {
+                result[type] = 1.0; // 默认中等水平
+            });
+            
+            // 如果有实际得分则使用实际值
+            if (Array.isArray(scores)) {
+                scores.forEach(score => {
+                    if (score && score.code) {
+                        result[score.code] = standardize(score.averageScore);
+                    }
+                });
+            }
+            
+            return result;
+        }
+        
+        // 计算物理权重（简化公式）
+        function calculatePhysicsWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            // 简化计算，实际应根据完整公式
+            let weight = 3;
+            
+            // MBTI影响
+            weight += 1.5 * mbtiStd.MBTI_S_T_J;
+            
+            // 多元智能影响
+            weight += 2.0 * (miStd.math_logic * 1.8 + miStd.space * 1.6 + miStd.nature * 1.0);
+            
+            // 霍兰德影响
+            weight += 1.8 * (hollandStd.R * 1.8 + hollandStd.I * 1.6);
+            
+            // 职业锚影响
+            weight += 2.2 * (careerAnchorStd.TF * 1.8 + careerAnchorStd.CH * 1.6 + careerAnchorStd.EC * 1.6);
+            
+            // 限制在0-10范围内
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 计算历史权重（简化公式）
+        function calculateHistoryWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            let weight = 3;
+            weight += 1.5 * mbtiStd.MBTI_N_F_P;
+            weight += 2.0 * (miStd.language * 1.8 + miStd.interpersonal * 1.2 + miStd.self_cognition * 1.2);
+            weight += 1.8 * (hollandStd.A * 1.8 + hollandStd.S * 1.6 + hollandStd.E * 1.5);
+            weight += 2.2 * (careerAnchorStd.GM * 1.6 + careerAnchorStd.SV * 1.5 + careerAnchorStd.LS * 1.0);
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 计算化学权重（简化公式）
+        function calculateChemistryWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            let weight = 3;
+            const maxSN = Math.max(testResults.mbti.scores.S + testResults.mbti.scores.N, 1);
+            const maxTF = Math.max(testResults.mbti.scores.T + testResults.mbti.scores.F, 1);
+            weight += 1.5 * ((testResults.mbti.scores.S / maxSN) + (testResults.mbti.scores.T / maxTF));
+            weight += 2.0 * (miStd.math_logic * 1.8 + miStd.nature * 1.2);
+            weight += 1.8 * (hollandStd.R * 1.8 + hollandStd.I * 1.6);
+            weight += 2.2 * (careerAnchorStd.TF * 1.8 + careerAnchorStd.EC * 1.6 + careerAnchorStd.CH * 1.6);
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 计算生物权重（简化公式）
+        function calculateBiologyWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            let weight = 3;
+            const maxSN = Math.max(testResults.mbti.scores.S + testResults.mbti.scores.N, 1);
+            const maxJP = Math.max(testResults.mbti.scores.J + testResults.mbti.scores.P, 1);
+            weight += 1.5 * ((testResults.mbti.scores.S / maxSN) + (testResults.mbti.scores.P / maxJP));
+            weight += 2.0 * (miStd.nature * 1.8 + miStd.body_move * 0.3);
+            weight += 1.8 * (hollandStd.R * 1.6 + hollandStd.I * 1.6);
+            weight += 2.2 * (careerAnchorStd.TF * 1.8 + careerAnchorStd.SV * 1.6 + careerAnchorStd.LS * 1.2);
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 计算政治权重（简化公式）
+        function calculatePoliticsWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            let weight = 3;
+            const maxSN = Math.max(testResults.mbti.scores.S + testResults.mbti.scores.N, 1);
+            const maxTF = Math.max(testResults.mbti.scores.T + testResults.mbti.scores.F, 1);
+            weight += 1.5 * ((testResults.mbti.scores.N / maxSN) + (testResults.mbti.scores.F / maxTF));
+            weight += 2.0 * (miStd.language * 1.8 + miStd.interpersonal * 1.5);
+            weight += 1.8 * (hollandStd.S * 1.8 + hollandStd.E * 1.8 + hollandStd.A * 1.5);
+            weight += 2.2 * (careerAnchorStd.GM * 1.8 + careerAnchorStd.SV * 1.8 + careerAnchorStd.SE * 1.2);
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 计算地理权重（简化公式）
+        function calculateGeographyWeight(mbtiStd, miStd, hollandStd, careerAnchorStd) {
+            let weight = 3;
+            weight += 1.5 * (1 - mbtiStd.MBTI_S_N_balance);
+            weight += 2.0 * (miStd.space * 1.6 + miStd.nature * 1.6 + miStd.self_cognition * 1.2);
+            weight += 1.8 * (hollandStd.I * 1.6 + hollandStd.S * 1.6 + hollandStd.A * 1.5);
+            weight += 2.2 * (careerAnchorStd.AU * 1.2 + careerAnchorStd.LS * 1.4 + careerAnchorStd.SV * 1.6);
+            return Math.min(10, Math.max(0, weight));
+        }
+        
+        // 显示科目权重
+        function displaySubjectWeights(subjectWeights) {
+            const container = document.getElementById('subjectWeights');
+            
+            let html = '';
+            
+            for (const [subject, weight] of Object.entries(subjectWeights)) {
+                const roundedWeight = weight.toFixed(1);
+                
+                // 确定推荐等级
+                let recommendationClass = '';
+                let recommendationText = '';
+                
+                if (weight >= 7.0) {
+                    recommendationClass = 'strong-recommend';
+                    recommendationText = '强推荐';
+                } else if (weight >= 4.5) {
+                    recommendationClass = 'medium-recommend';
+                    recommendationText = '中等推荐';
+                } else {
+                    recommendationClass = 'not-recommend';
+                    recommendationText = '不推荐';
+                }
+                
+                // 生成科目描述
+                const description = getSubjectDescription(subject, weight);
+                
+                html += `
+                    <div class="subject-card">
+                        <div class="subject-name">${subject}</div>
+                        <div class="subject-weight">${roundedWeight}</div>
+                        <div class="recommendation-level ${recommendationClass}">${recommendationText}</div>
+                        <div class="subject-description">${description}</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 获取科目描述
+        function getSubjectDescription(subject, weight) {
+            const descriptions = {
+                "物理": "需要较强的逻辑思维、空间想象和数学能力，适合喜欢探究物质世界规律的学生。",
+                "历史": "需要良好的记忆、分析和文字表达能力，适合对人文、社会变迁感兴趣的学生。",
+                "化学": "需要实验操作、观察分析和逻辑推理能力，适合喜欢探索物质变化的同学。",
+                "生物": "需要记忆、观察和实验能力，适合对生命科学、生态环境感兴趣的学生。",
+                "政治": "需要理解、分析和表达能力，适合关注社会、法律、国际关系的同学。",
+                "地理": "需要空间思维、图表分析和综合思维能力，适合对自然环境、人文地理感兴趣的学生。"
+            };
+            
+            let baseDescription = descriptions[subject] || "该科目需要综合能力。";
+            
+            if (weight >= 7.0) {
+                return `✅ 您的测试结果显示非常适合学习${subject}！${baseDescription}`;
+            } else if (weight >= 4.5) {
+                return `🟡 您的测试结果显示可以学习${subject}。${baseDescription}`;
+            } else {
+                return `🔴 您的测试结果显示学习${subject}可能会有挑战。${baseDescription}`;
+            }
+        }
+        
+        // 开始AI聊天
+        function startAIChat() {
+            // 隐藏结果容器
+            document.getElementById('resultsContainer').classList.remove('active');
+            
+            // 显示AI容器
+            document.getElementById('aiContainer').classList.add('active');
+            
+            // 添加初始AI消息
+            const aiMessages = document.getElementById('aiMessages');
+            aiMessages.innerHTML = '';
+            
+            // 创建测试结果摘要
+            const testSummary = createTestSummaryForAI();
+            
+            // 添加AI欢迎消息
+            addAIMessage(`
+                <strong>🤖 DeepSeek AI选科顾问</strong><br><br>
+                您好！我已经分析了您的测试结果，以下是基于您个人特质的选科建议分析：
+            `);
+            
+            // 稍后发送详细分析
+            setTimeout(() => {
+                sendAIInitialAnalysis(testSummary);
+            }, 1000);
+        }
+        
+        // 创建AI使用的测试结果摘要
+        function createTestSummaryForAI() {
+            let summary = "用户测试结果摘要：\n\n";
+            
+            // MBTI结果
+            if (testResults.mbti.type) {
+                const mbtiTypeInfo = window.MBTITestData?.getMBTITypeDetails(testResults.mbti.type);
+                summary += `1. MBTI性格类型：${testResults.mbti.type}（${mbtiTypeInfo?.name || '未知'}）\n`;
+                summary += `   特点：${mbtiTypeInfo?.description || '未知'}\n`;
+                summary += `   适合领域：${mbtiTypeInfo?.suitableFields || '未知'}\n\n`;
+            }
+            
+            // 多元智能结果
+            if (testResults.multipleIntelligence.topIntelligences?.length > 0) {
+                summary += `2. 多元智能优势（前三）：\n`;
+                testResults.multipleIntelligence.topIntelligences.forEach((intelligence, index) => {
+                    const details = window.MultipleIntelligenceTestData?.getIntelligenceDetails(intelligence[0]);
+                    summary += `   ${index + 1}. ${intelligence[0]}（得分：${intelligence[1]}）\n`;
+                    if (details) {
+                        summary += `      特征：${details.features}\n`;
+                        summary += `      适合领域：${details.preferences}\n`;
+                    }
+                });
+                summary += "\n";
+            }
+            
+            // 霍兰德结果
+            if (testResults.holland.code) {
+                summary += `3. 霍兰德职业代码：${testResults.holland.code}\n`;
+                summary += `   典型职业倾向：${testResults.holland.careers.slice(0, 5).join('、')}\n\n`;
+            }
+            
+            // 职业锚结果
+            if (testResults.careerAnchor.primary) {
+                summary += `4. 主要职业锚：${testResults.careerAnchor.primary.name}\n`;
+                summary += `   核心需求：${testResults.careerAnchor.primary.coreNeed}\n`;
+                summary += `   典型职业：${testResults.careerAnchor.primary.typicalCareers}\n\n`;
+            }
+            
+            return summary;
+        }
+        
+        // 发送AI初始分析
+        function sendAIInitialAnalysis(testSummary) {
+            // 显示加载中
+            document.getElementById('aiLoading').classList.add('active');
+            
+            // 构建AI提示
+            const prompt = `
+                你是一名专业的选科指导顾问。请根据以下用户测试结果，提供个性化的选科建议：
+                
+                ${testSummary}
+                
+                请用简洁易懂的中文回答，分析用户适合的选科组合，并给出具体理由。考虑"3+1+2"选科模式，分析物理和历史作为首选科目，以及其他科目的适配度。
+                
+                请包括以下内容：
+                1. 简要总结用户的主要特质
+                2. 推荐2-3个选科组合，按适配度排序
+                3. 每个组合的优缺点分析
+                4. 相关大学专业和未来职业方向建议
+                5. 学习建议和注意事项
+                
+                回答请使用友好的语气，并鼓励用户提出更多问题。
+            `;
+            
+            // 调用DeepSeek API
+            callDeepSeekAPI(prompt, true);
+        }
+        
+        // 调用DeepSeek API
+        async function callDeepSeekAPI(prompt, isInitial = false) {
+            // 初始化AI实例
+            if (!enhancedAI) {
+                enhancedAI = new EnhancedAI();
+            }
+            
+            // 显示加载中
+            document.getElementById('aiLoading').classList.add('active');
+            
+            try {
+                // 使用增强AI发送消息
+                const aiResponse = await enhancedAI.sendMessage(prompt, testResults, isInitial);
+                
+                // 隐藏加载中
+                document.getElementById('aiLoading').classList.remove('active');
+                
+                // 添加AI消息
+                addAIMessage(aiResponse);
+                
+            } catch (error) {
+                console.error('AI调用错误:', error);
+                
+                // 隐藏加载中
+                document.getElementById('aiLoading').classList.remove('active');
+                
+                // 添加错误消息
+                addAIMessage(`抱歉，AI服务暂时遇到问题：${error.message}\n\n我会尝试为您提供基本的建议。`);
+                
+                // 使用备用响应
+                const fallbackResponse = enhancedAI.getFallbackResponse(prompt, isInitial);
+                setTimeout(() => {
+                    addAIMessage(fallbackResponse);
+                }, 500);
+            }
+        }
+        
+        // 获取模拟的初始响应
+        function getMockInitialResponse() {
+            return `
+                <strong>基于您的测试结果分析：</strong><br><br>
+                
+                <strong>🔍 您的个人特质总结：</strong><br>
+                根据测试结果，您具有${testResults.mbti.type || "分析型"}性格，在${testResults.multipleIntelligence.topIntelligences?.[0]?.[0] || "逻辑思维"}方面表现突出，职业兴趣偏向${testResults.holland.code || "研究型"}，最看重${testResults.careerAnchor.primary?.name || "专业成长"}的职业价值。<br><br>
+                
+                <strong>📚 推荐选科组合：</strong><br>
+                
+                <strong>1. 物理+化学+生物（强理科组合）</strong><br>
+                ✅ <strong>适配度：高</strong><br>
+                • <strong>优势</strong>：完全匹配您的逻辑思维和分析能力，大学专业选择面最广<br>
+                • <strong>适合专业</strong>：临床医学、计算机、电子信息、生物工程等<br>
+                • <strong>未来职业</strong>：医生、工程师、科研人员、技术专家<br><br>
+                
+                <strong>2. 物理+化学+地理（理工结合组合）</strong><br>
+                ✅ <strong>适配度：中高</strong><br>
+                • <strong>优势</strong>：结合逻辑思维与空间想象能力，专业选择灵活<br>
+                • <strong>适合专业</strong>：地理信息科学、环境工程、建筑学、测绘工程<br>
+                • <strong>未来职业</strong>：建筑师、环境工程师、GIS分析师、城市规划师<br><br>
+                
+                <strong>3. 历史+政治+地理（纯文科组合）</strong><br>
+                ⚠️ <strong>适配度：中等</strong><br>
+                • <strong>优势</strong>：发挥您的人际理解和分析能力<br>
+                • <strong>适合专业</strong>：法学、新闻传播、行政管理、国际关系<br>
+                • <strong>注意</strong>：专业选择相对较窄，需要较强的记忆和表达能力<br><br>
+                
+                <strong>💡 学习建议：</strong><br>
+                1. 如果选择理科组合，建议加强实验操作和数学应用能力<br>
+                2. 无论选择哪个组合，英语都十分重要<br>
+                3. 可以参加相关学科的竞赛或实践活动，验证自己的兴趣<br>
+                4. 与老师、家长充分沟通，结合学校师资情况做最终决定<br><br>
+                
+                <strong>❓ 您可以问我：</strong><br>
+                • 我适合选择物理+化学+生物组合吗？<br>
+                • 如果选择历史方向，有哪些大学专业推荐？<br>
+                • 我的性格适合从事什么类型的职业？<br>
+                • 如何提高我在某学科的学习效果？<br><br>
+                
+                请随时提出您的问题，我会为您提供更具体的建议！
+            `;
+        }
+        
+        // 获取模拟的后续响应
+        function getMockFollowupResponse() {
+            const responses = [
+                "基于您的测试结果，选择物理+化学+生物组合确实是非常合适的选择。这个组合不仅完全匹配您的逻辑分析能力，而且为您打开了医学、工程、科研等众多高前景专业的大门。不过需要注意，这个组合学习强度较大，需要良好的数理基础和学习耐力。",
+                
+                "如果您选择历史方向，结合您的测试结果，我推荐考虑法学、新闻传播、国际关系等专业。您的分析能力和人际理解能力在这些领域会有很好的发挥。同时，建议您加强英语学习，这对文科专业尤为重要。",
+                
+                "根据您的职业锚测试结果，您最看重专业成长和技术能力，因此技术型、专家型职业道路可能最适合您。例如：软件工程师、数据分析师、科研人员、医疗专家等。这些职业需要持续学习和技术积累，与您的核心职业价值观高度匹配。",
+                
+                "要提高物理学习效果，建议：1) 建立扎实的数学基础；2) 多动手做实验，理解物理原理；3) 学会用物理思维分析实际问题；4) 定期总结错题，查漏补缺。您的逻辑思维能力是学习物理的优势，关键是培养对物理现象的兴趣和探究精神。",
+                
+                "选科决策除了考虑个人特质，还需要结合：1) 您的实际学习成绩；2) 学校的师资力量；3) 目标大学的专业要求；4) 未来的职业规划。建议您与班主任、学科老师深入沟通，也可以与从事相关行业的亲友交流，获取更多实际信息。"
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+        
+        // 发送AI消息
+        function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 添加用户消息
+            addUserMessage(message);
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 调整输入框高度
+            input.style.height = 'auto';
+            
+            // 调用AI API
+            callDeepSeekAPI(message, false);
+        }
+        
+        // 添加AI消息
+        function addAIMessage(content) {
+            const aiMessages = document.getElementById('aiMessages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+            `;
+            
+            aiMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+        
+        // 添加用户消息
+        function addUserMessage(content) {
+            const aiMessages = document.getElementById('aiMessages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+            `;
+            
+            aiMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
